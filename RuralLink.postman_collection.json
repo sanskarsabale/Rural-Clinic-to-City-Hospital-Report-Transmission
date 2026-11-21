@@ -1,0 +1,391 @@
+{
+  "info": {
+    "_postman_id": "rurallink-dc-academic-collection-2026",
+    "name": "RuralLink – Data Communication REST API Collection",
+    "description": "Complete REST API suite for RuralLink: Rural Clinic to City Hospital Report Transmission System. Designed for Second Year B.Tech IT Data Communication academic demonstration.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "report_id",
+      "value": "RPT-20261102-APPEN1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login as Rural Clinic Doctor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "    console.log('JWT Token set successfully');",
+                  "}",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rural.doctor@rurallink.org\",\n  \"password\": \"RuralDoctor@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login as City Hospital Doctor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "}",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"hospital.doctor@rurallink.org\",\n  \"password\": \"HospitalDoctor@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Verify Current Doctor Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout Doctor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Reports & Data Transmission",
+      "item": [
+        {
+          "name": "Fetch Reports List (Role Scoped)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reports?priority=Critical Emergency",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports"],
+              "query": [
+                { "key": "priority", "value": "Critical Emergency" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Report with Idempotency Key & Sample PDF",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.report && jsonData.report.report_id) {",
+                  "    pm.collectionVariables.set('report_id', jsonData.report.report_id);",
+                  "}",
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Server Acknowledgement Token Returned', function () {",
+                  "    pm.expect(jsonData.server_acknowledgement.ack_token).to.not.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Idempotency-Key", "value": "IDEMP-POSTMAN-TEST-9901" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "patient_id", "value": "PAT-9081", "type": "text" },
+                { "key": "patient_name", "value": "Kavita Rane", "type": "text" },
+                { "key": "age", "value": "39", "type": "text" },
+                { "key": "gender", "value": "Female", "type": "text" },
+                { "key": "priority", "value": "Urgent", "type": "text" },
+                { "key": "symptoms", "value": "Persistent high fever, chills, productive cough with yellow sputum for 5 days", "type": "text" },
+                { "key": "diagnosis", "value": "Community-Acquired Lobar Pneumonia of Left Lower Lobe", "type": "text" },
+                { "key": "additional_notes", "value": "SpO2 93% on room air. Started Amoxicillin-Clavulanate.", "type": "text" },
+                { "key": "generate_sample_pdf", "value": "true", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports"]
+            }
+          }
+        },
+        {
+          "name": "Test Duplicate Request Rejection (Idempotency 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "pm.test('Duplicate rejected message', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.error).to.include('Duplicate');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Idempotency-Key", "value": "IDEMP-POSTMAN-TEST-9901" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "patient_id", "value": "PAT-9081", "type": "text" },
+                { "key": "patient_name", "value": "Kavita Rane", "type": "text" },
+                { "key": "age", "value": "39", "type": "text" },
+                { "key": "gender", "value": "Female", "type": "text" },
+                { "key": "symptoms", "value": "Persistent high fever", "type": "text" },
+                { "key": "diagnosis", "value": "Lobar Pneumonia", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports"]
+            }
+          }
+        },
+        {
+          "name": "Get Report Details & Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reports/{{report_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "{{report_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Report Status (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Under Review\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reports/{{report_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "{{report_id}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Submit City Hospital Tele-Medicine Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department\": \"Pulmonology & Critical Care\",\n  \"urgency_directive\": \"Proceed with Local Care (Follow Prescription)\",\n  \"clinical_assessment\": \"CXR indicates left lower zone opacity consistent with typical pneumonia. Oxygenation is borderline.\",\n  \"prescription_advice\": \"Initiate IV Ceftriaxone 1g BD + Azithromycin 500mg OD. Steam inhalation TDS. Maintain SpO2 > 94% with nasal cannula 2L/min. If fever does not resolve in 48h, transfer to City Hospital.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reports/{{report_id}}/response",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "{{report_id}}", "response"]
+            }
+          }
+        },
+        {
+          "name": "Request Explicit Server ACK Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reports/{{report_id}}/ack",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "{{report_id}}", "ack"]
+            }
+          }
+        },
+        {
+          "name": "Download Authorized PDF Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reports/{{report_id}}/download",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "{{report_id}}", "download"]
+            }
+          }
+        },
+        {
+          "name": "Get Network Trace & Packet Timeline",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reports/{{report_id}}/network-trace",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "{{report_id}}", "network-trace"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Data Comm Lab & Fault Simulation",
+      "item": [
+        {
+          "name": "Get Data Comm Metrics & Stats",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/network-lab/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "network-lab", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Simulate Network Fault (Packet Drop 503)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fault_type\": \"drop\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/network-lab/simulate-fault",
+              "host": ["{{base_url}}"],
+              "path": ["api", "network-lab", "simulate-fault"]
+            }
+          }
+        },
+        {
+          "name": "Simulate Network Latency Delay",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fault_type\": \"delay\",\n  \"delay_seconds\": 2.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/network-lab/simulate-fault",
+              "host": ["{{base_url}}"],
+              "path": ["api", "network-lab", "simulate-fault"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

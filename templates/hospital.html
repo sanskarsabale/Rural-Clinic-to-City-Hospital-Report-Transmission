@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}City Hospital Portal – RuralLink{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+      <span class="user-role-pill role-hospital">PORTAL B: CITY HOSPITAL</span>
+      <span style="font-size:0.8rem; color:#64748b;">• {{ session.get('organization', 'Metro Multi-Specialty City Hospital') }}</span>
+    </div>
+    <h1 class="page-title">City Hospital Specialist Triage & Review Center</h1>
+    <p class="page-subtitle">
+      Dr. {{ session.get('name', 'Ananya Roy') }} — Incoming tele-medicine referrals from rural primary health clinics
+    </p>
+  </div>
+
+  <div style="display:flex; gap:0.5rem; align-items:center;">
+    <button class="btn btn-secondary btn-sm" onclick="loadHospitalReports()">🔄 Refresh Queue</button>
+    <a href="/network-lab" class="btn btn-secondary btn-sm">📡 Wireshark Lab</a>
+  </div>
+</div>
+
+<!-- Critical Emergency Flash Banner -->
+<div id="critical-alert-banner" style="display:none; background:#fee2e2; border-left:4px solid #dc2626; padding:0.85rem 1.25rem; border-radius:8px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between;">
+  <div style="display:flex; align-items:center; gap:0.75rem;">
+    <span style="font-size:1.5rem;">🚨</span>
+    <div>
+      <div id="critical-cases-count" style="font-weight:800; color:#991b1b; font-size:0.95rem;">
+        CRITICAL CASES AWAITING IMMEDIATE TRIAGE!
+      </div>
+      <div style="font-size:0.8rem; color:#b91c1c;">
+        Priority surgical or cardiac referrals require prompt clinical response and bed reservation.
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-danger btn-sm" onclick="document.getElementById('filter-priority-select').value='Critical Emergency'; filterAndRenderReports();">
+    View Critical Only
+  </button>
+</div>
+
+<!-- Hospital Stats Grid -->
+<div class="grid-stats">
+  <div class="stat-card">
+    <div class="stat-accent" style="background:#0284c7;"></div>
+    <div class="stat-icon" style="background:#e0f2fe; color:#0284c7;">📥</div>
+    <div>
+      <div id="stat-incoming-total" class="stat-val">0</div>
+      <div class="stat-label">Total Referrals Received</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-accent" style="background:#d97706;"></div>
+    <div class="stat-icon" style="background:#fef3c7; color:#d97706;">⏳</div>
+    <div>
+      <div id="stat-incoming-pending" class="stat-val">0</div>
+      <div class="stat-label">Pending Doctor Review</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-accent" style="background:#7c3aed;"></div>
+    <div class="stat-icon" style="background:#ede9fe; color:#7c3aed;">🩺</div>
+    <div>
+      <div id="stat-incoming-review" class="stat-val">0</div>
+      <div class="stat-label">Under Active Review</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-accent" style="background:#059669;"></div>
+    <div class="stat-icon" style="background:#d1fae5; color:#059669;">✅</div>
+    <div>
+      <div id="stat-incoming-responded" class="stat-val">0</div>
+      <div class="stat-label">Consultations Dispatched</div>
+    </div>
+  </div>
+</div>
+
+<!-- Incoming Referrals Panel -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>🏥 Incoming Patient Reports Queue</span>
+    </div>
+    <span class="badge status-received">Real-Time Core Gateway</span>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div style="padding:1rem 1.25rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+    <div style="flex:1; min-width:240px;">
+      <input type="text" id="search-hospital-input" class="form-control" placeholder="Search by patient name, ID, clinic name, or diagnosis...">
+    </div>
+
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <label style="font-size:0.8rem; font-weight:600; color:#64748b;">Priority:</label>
+      <select id="filter-priority-select" class="form-control" style="width:160px;">
+        <option value="all">All Priorities</option>
+        <option value="Critical Emergency">Critical Emergency</option>
+        <option value="Urgent">Urgent</option>
+        <option value="Normal">Normal</option>
+        <option value="Low">Low</option>
+      </select>
+    </div>
+
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <label style="font-size:0.8rem; font-weight:600; color:#64748b;">Status:</label>
+      <select id="filter-status-select" class="form-control" style="width:160px;">
+        <option value="all">All Statuses</option>
+        <option value="received">Received</option>
+        <option value="under-review">Under Review</option>
+        <option value="responded">Responded</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Report ID</th>
+          <th>Originating Clinic</th>
+          <th>Patient Details</th>
+          <th>Diagnosis / Symptoms</th>
+          <th>Priority</th>
+          <th>Lifecycle Status</th>
+          <th>Attachment</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="hospital-reports-body">
+        <tr>
+          <td colspan="8" style="text-align:center; padding:2.5rem; color:#64748b;">Loading hospital triage queue...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/hospital.js') }}"></script>
+{% endblock %}

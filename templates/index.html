@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}RuralLink – System Architecture & Overview{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">RuralLink Tele-Medicine Transmission System</h1>
+    <p class="page-subtitle">
+      A High-Reliability Client-Server Web Application connecting Rural Primary Health Centers with Tertiary City Hospitals
+    </p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <a href="/clinic" class="btn btn-primary">🩺 Open Rural Clinic Portal</a>
+    <a href="/hospital" class="btn btn-secondary">🏥 Open City Hospital Portal</a>
+    <a href="/network-lab" class="btn btn-secondary">📡 Wireshark Lab</a>
+  </div>
+</div>
+
+<!-- Quick Access Portal Cards -->
+<div class="grid-stats" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-bottom: 2rem;">
+  <div class="panel" style="margin-bottom:0; border-top: 4px solid #0284c7;">
+    <div class="panel-body">
+      <div style="font-size:2rem; margin-bottom:0.5rem;">🩺</div>
+      <h3 style="font-size:1.2rem; color:#0f172a; margin-bottom:0.4rem;">Portal A: Rural Clinic</h3>
+      <p style="font-size:0.88rem; color:#64748b; margin-bottom:1.2rem;">
+        Empowers rural doctors to capture patient vitals, symptoms, diagnosis, attach lab PDFs, and transmit reports with duplicate prevention and offline queueing.
+      </p>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="badge status-sent">Originating Edge</span>
+        <a href="/clinic" class="btn btn-primary btn-sm">Enter Rural Dashboard &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:0; border-top: 4px solid #7c3aed;">
+    <div class="panel-body">
+      <div style="font-size:2rem; margin-bottom:0.5rem;">🏥</div>
+      <h3 style="font-size:1.2rem; color:#0f172a; margin-bottom:0.4rem;">Portal B: City Hospital</h3>
+      <p style="font-size:0.88rem; color:#64748b; margin-bottom:1.2rem;">
+        Enables hospital specialists to receive incoming patient referrals, verify SHA-256 data integrity, preview PDFs, update review statuses, and transmit consultation directives.
+      </p>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="badge status-under-review">Receiving Core</span>
+        <a href="/hospital" class="btn btn-primary btn-sm" style="background:#7c3aed;">Enter Hospital Dashboard &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:0; border-top: 4px solid #059669;">
+    <div class="panel-body">
+      <div style="font-size:2rem; margin-bottom:0.5rem;">📡</div>
+      <h3 style="font-size:1.2rem; color:#0f172a; margin-bottom:0.4rem;">Data Communication Lab</h3>
+      <p style="font-size:0.88rem; color:#64748b; margin-bottom:1.2rem;">
+        Interactive packet analyzer, TCP/IP stack breakdown, Wireshark capture display filters, and network fault simulator for academic evaluation and viva defense.
+      </p>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="badge status-responded">Academic Testing</span>
+        <a href="/network-lab" class="btn btn-success btn-sm">Open Network Lab &rarr;</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Architecture & Data Comm Concept Flow -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>🌐 Data Communication Concepts & Transmission Pipeline</span>
+    </div>
+    <span class="badge status-received">Client-Server Architecture</span>
+  </div>
+  <div class="panel-body">
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+      <h4 style="color:#0f172a; margin-bottom:0.75rem;">End-to-End Transmission Workflow</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+        <div style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 1rem;">
+          <div style="font-weight:700; color:#0284c7; margin-bottom:0.3rem;">1. Report Packaging</div>
+          <p style="font-size:0.82rem; color:#475569;">
+            Rural doctor enters patient clinical data. Frontend computes SHA-256 checksum and generates a unique UUIDv4 <code>Idempotency-Key</code>.
+          </p>
+        </div>
+
+        <div style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 1rem;">
+          <div style="font-weight:700; color:#2563eb; margin-bottom:0.3rem;">2. TCP/IP Transport</div>
+          <p style="font-size:0.82rem; color:#475569;">
+            Data leaves edge node via TCP port 5000 / HTTPS. HTTP <code>multipart/form-data</code> carries JSON metadata + PDF attachment over IP packets.
+          </p>
+        </div>
+
+        <div style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 1rem;">
+          <div style="font-weight:700; color:#7c3aed; margin-bottom:0.3rem;">3. Server Acceptance & ACK</div>
+          <p style="font-size:0.82rem; color:#475569;">
+            Flask REST API checks idempotency cache (rejecting duplicates with 409), stores file securely, verifies SHA-256, and returns a <code>201 Created</code> with Server ACK Token.
+          </p>
+        </div>
+
+        <div style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 1rem;">
+          <div style="font-weight:700; color:#059669; margin-bottom:0.3rem;">4. Hospital Response</div>
+          <p style="font-size:0.82rem; color:#475569;">
+            Hospital specialist reviews findings, verifies integrity badge, updates status to <code>Under Review</code>, and transmits clinical directives back to rural clinic.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Academic Concepts Grid -->
+    <h4 style="color:#0f172a; margin-bottom:1rem;">Core Data Communication Curricular Topics Demonstrated:</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+      <div style="border-left: 3px solid #0284c7; padding-left: 0.75rem;">
+        <strong style="font-size:0.9rem; color:#0f172a;">Client-Server Model</strong>
+        <p style="font-size:0.8rem; color:#64748b;">Clear separation between Edge Clinic client, REST API server, and Hospital Core consumers.</p>
+      </div>
+
+      <div style="border-left: 3px solid #2563eb; padding-left: 0.75rem;">
+        <strong style="font-size:0.9rem; color:#0f172a;">Request-Response & RTT</strong>
+        <p style="font-size:0.8rem; color:#64748b;">Round-trip latency tracking in milliseconds for each transmission event.</p>
+      </div>
+
+      <div style="border-left: 3px solid #7c3aed; padding-left: 0.75rem;">
+        <strong style="font-size:0.9rem; color:#0f172a;">Server Acknowledgement (ACK)</strong>
+        <p style="font-size:0.8rem; color:#64748b;">Delivery confirmation tokens guarantee the client does not mark packets delivered prematurely.</p>
+      </div>
+
+      <div style="border-left: 3px solid #d97706; padding-left: 0.75rem;">
+        <strong style="font-size:0.9rem; color:#0f172a;">Reliable Transport & Backoff</strong>
+        <p style="font-size:0.8rem; color:#64748b;">Exponential backoff retry algorithm (1s, 2s, 4s, 8s) ensures network recovery without congestion.</p>
+      </div>
+
+      <div style="border-left: 3px solid #dc2626; padding-left: 0.75rem;">
+        <strong style="font-size:0.9rem; color:#0f172a;">Duplicate Prevention (Idempotency)</strong>
+        <p style="font-size:0.8rem; color:#64748b;"><code>Idempotency-Key</code> header prevents duplicate database records upon network retries.</p>
+      </div>
+
+      <div style="border-left: 3px solid #059669; padding-left: 0.75rem;">
+        <strong style="font-size:0.9rem; color:#0f172a;">Packet Analysis via Wireshark</strong>
+        <p style="font-size:0.8rem; color:#64748b;">Pre-configured display filters and dissection views ready for packet sniffing on loopback or LAN.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REST API Documentation Table -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>🔌 RuralLink REST API Endpoints Specification</span>
+    </div>
+    <span class="badge status-sent">HTTP/1.1 REST</span>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Endpoint</th>
+          <th>Purpose</th>
+          <th>Payload Format</th>
+          <th>Success Status</th>
+          <th>Error Codes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge status-responded">POST</span></td>
+          <td><code>/api/auth/login</code></td>
+          <td>Doctor authentication & JWT issuance</td>
+          <td>JSON</td>
+          <td><span class="badge status-responded">200 OK</span></td>
+          <td>400, 401</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-responded">POST</span></td>
+          <td><code>/api/auth/logout</code></td>
+          <td>Invalidate session / logout</td>
+          <td>None</td>
+          <td><span class="badge status-responded">200 OK</span></td>
+          <td>-</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-sent">GET</span></td>
+          <td><code>/api/reports</code></td>
+          <td>Fetch role-scoped reports list with filters</td>
+          <td>Query Params</td>
+          <td><span class="badge status-responded">200 OK</span></td>
+          <td>401</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-responded">POST</span></td>
+          <td><code>/api/reports</code></td>
+          <td>Submit new report + PDF attachment with idempotency</td>
+          <td>Multipart / Form-Data</td>
+          <td><span class="badge status-received">201 Created</span></td>
+          <td>400, 401, 409, 413</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-sent">GET</span></td>
+          <td><code>/api/reports/&lt;id&gt;</code></td>
+          <td>Retrieve report details, response, and audit log</td>
+          <td>URL Path</td>
+          <td><span class="badge status-responded">200 OK</span></td>
+          <td>401, 403, 404</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-queued">PATCH</span></td>
+          <td><code>/api/reports/&lt;id&gt;/status</code></td>
+          <td>Transition report lifecycle status</td>
+          <td>JSON</td>
+          <td><span class="badge status-responded">200 OK</span></td>
+          <td>400, 401, 404</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-responded">POST</span></td>
+          <td><code>/api/reports/&lt;id&gt;/response</code></td>
+          <td>Hospital doctor transmits clinical advice</td>
+          <td>JSON</td>
+          <td><span class="badge status-received">201 Created</span></td>
+          <td>400, 401, 403, 404</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-responded">POST</span></td>
+          <td><code>/api/reports/&lt;id&gt;/ack</code></td>
+          <td>Explicit Server Acknowledgement (ACK) verification</td>
+          <td>None</td>
+          <td><span class="badge status-responded">200 OK</span></td>
+          <td>401, 404</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-responded">POST</span></td>
+          <td><code>/api/reports/&lt;id&gt;/upload</code></td>
+          <td>Upload / replace PDF medical report</td>
+          <td>Multipart / Form-Data</td>
+          <td><span class="badge status-responded">200 OK</span></td>
+          <td>400, 401, 404</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-sent">GET</span></td>
+          <td><code>/api/reports/&lt;id&gt;/download</code></td>
+          <td>Secure authorized streaming of attached PDF</td>
+          <td>URL Path</td>
+          <td><span class="badge status-responded">200 OK (Binary)</span></td>
+          <td>401, 403, 404</td>
+        </tr>
+        <tr>
+          <td><span class="badge status-sent">GET</span></td>
+          <td><code>/api/reports/&lt;id&gt;/network-trace</code></td>
+          <td>Retrieve packet-level timeline for viva demonstration</td>
+          <td>URL Path</td>
+          <td><span class="badge status-responded">200 OK</span></td>
+          <td>401, 404</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

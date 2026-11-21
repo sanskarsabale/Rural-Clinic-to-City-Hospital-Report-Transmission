@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Data Communication Lab & Wireshark Inspector – RuralLink{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+      <span class="user-role-pill" style="background:#dbeafe; color:#1d4ed8;">ACADEMIC EXPERIMENTAL LAB</span>
+      <span style="font-size:0.8rem; color:#64748b;">• Second Year B.Tech IT — Data Communication</span>
+    </div>
+    <h1 class="page-title">Data Communication Protocol Analyzer & Wireshark Lab</h1>
+    <p class="page-subtitle">
+      Inspect network packets, verify TCP/IP transmission semantics, simulate link faults, and analyze Wireshark traces
+    </p>
+  </div>
+
+  <div style="display:flex; gap:0.5rem; align-items:center;">
+    <a href="/api/network-lab/export-postman" class="btn btn-secondary btn-sm" download>
+      📦 Download Postman Collection
+    </a>
+    <button class="btn btn-primary btn-sm" onclick="loadLabStats()">
+      🔄 Refresh Metrics
+    </button>
+  </div>
+</div>
+
+<!-- Live Network Metrics Grid -->
+<div class="grid-stats">
+  <div class="stat-card">
+    <div class="stat-accent" style="background:#0284c7;"></div>
+    <div class="stat-icon" style="background:#e0f2fe; color:#0284c7;">📦</div>
+    <div>
+      <div id="metric-total-reports" class="stat-val">0</div>
+      <div class="stat-label">Total Reports Handled</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-accent" style="background:#059669;"></div>
+    <div class="stat-icon" style="background:#d1fae5; color:#059669;">🛡️</div>
+    <div>
+      <div id="metric-acks" class="stat-val">0</div>
+      <div class="stat-label">Server ACKs Verified</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-accent" style="background:#dc2626;"></div>
+    <div class="stat-icon" style="background:#fee2e2; color:#dc2626;">🚫</div>
+    <div>
+      <div id="metric-duplicates" class="stat-val">0</div>
+      <div class="stat-label">Duplicates Prevented</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-accent" style="background:#7c3aed;"></div>
+    <div class="stat-icon" style="background:#ede9fe; color:#7c3aed;">⚡</div>
+    <div>
+      <div id="metric-avg-rtt" class="stat-val">0 ms</div>
+      <div class="stat-label">Average Server RTT</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 1: Network Fault Simulator -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>🧪 Transmission Resilience & Network Fault Simulator</span>
+    </div>
+    <span class="badge status-queued">Interactive Experimentation</span>
+  </div>
+  <div class="panel-body">
+    <p style="font-size:0.9rem; color:#475569; margin-bottom:1.25rem;">
+      Use this simulator during viva demonstrations to show your professors how RuralLink handles transmission interruptions, exponential backoff retries, and offline queueing.
+    </p>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem;">
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1.2rem;">
+        <h4 style="color:#0f172a; margin-bottom:0.4rem;">1. Packet Drop (HTTP 503)</h4>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:1rem;">
+          Simulates link corruption. Client will automatically buffer the report into local storage and initiate exponential backoff retries.
+        </p>
+        <button class="btn btn-secondary btn-sm" onclick="runFaultTest('drop')">
+          💥 Trigger 503 Packet Drop
+        </button>
+      </div>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1.2rem;">
+        <h4 style="color:#0f172a; margin-bottom:0.4rem;">2. Gateway Timeout (HTTP 504)</h4>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:1rem;">
+          Simulates rural radio link timeout. Client transport catches socket timeout and enqueues payload with duplicate key intact.
+        </p>
+        <button class="btn btn-secondary btn-sm" onclick="runFaultTest('timeout')">
+          ⏱️ Trigger 504 Gateway Timeout
+        </button>
+      </div>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1.2rem;">
+        <h4 style="color:#0f172a; margin-bottom:0.4rem;">3. High Latency Injection</h4>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:1rem;">
+          Injects a 2.5 second artificial transmission delay to illustrate round-trip time (RTT) overhead and asynchronous UI responsiveness.
+        </p>
+        <button class="btn btn-secondary btn-sm" onclick="runFaultTest('delay', 2.5)">
+          ⏳ Inject 2.5s Link Delay
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: Wireshark Packet Analysis Guide -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>🦈 Wireshark Packet Sniffing & Analysis Guide</span>
+    </div>
+    <span class="badge status-sent">Capture Port 5000</span>
+  </div>
+  <div class="panel-body">
+    <div style="background:#f0f9ff; border-left:4px solid #0284c7; padding:1rem; border-radius:6px; margin-bottom:1.5rem;">
+      <h4 style="color:#0369a1; margin-bottom:0.3rem;">How to Capture RuralLink Packets in Wireshark:</h4>
+      <ol style="margin-left:1.5rem; font-size:0.88rem; color:#0c4a6e; line-height:1.6;">
+        <li>Launch <strong>Wireshark</strong> on your computer.</li>
+        <li>For local development on <code>127.0.0.1</code>, double-click <strong>"Adapter for loopback traffic capture"</strong> (or <code>Npcap Loopback Adapter</code>). If testing across two computers on LAN, select your Wi-Fi or Ethernet adapter.</li>
+        <li>Paste any of the display filters below into the green filter bar at the top of Wireshark and hit Enter.</li>
+        <li>Submit a report in the <strong>Rural Clinic Portal</strong> and watch the TCP 3-way handshake and HTTP packets appear live!</li>
+      </ol>
+    </div>
+
+    <h4 style="color:#0f172a; margin-bottom:0.75rem;">Key Wireshark Display Filters Cheat Sheet:</h4>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Objective / Scenario</th>
+            <th>Wireshark Display Filter</th>
+            <th>Protocol Stack Details</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="wireshark-filters-body">
+          <tr>
+            <td><strong>Filter All RuralLink HTTP Traffic</strong></td>
+            <td><code>http && tcp.port == 5000</code></td>
+            <td>Captures all application-layer requests/responses</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="copyFilter('http && tcp.port == 5000')">📋 Copy</button></td>
+          </tr>
+          <tr>
+            <td><strong>Capture Report Submission POSTs</strong></td>
+            <td><code>http.request.method == "POST" && http.request.uri contains "/api/reports"</code></td>
+            <td>Isolates patient data & multipart PDF packets</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="copyFilter('http.request.method == &quot;POST&quot; && http.request.uri contains &quot;/api/reports&quot;')">📋 Copy</button></td>
+          </tr>
+          <tr>
+            <td><strong>Capture Server Acknowledgements (201)</strong></td>
+            <td><code>http.response.code == 201</code></td>
+            <td>Inspects server ACK token & SHA-256 verification</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="copyFilter('http.response.code == 201')">📋 Copy</button></td>
+          </tr>
+          <tr>
+            <td><strong>Capture Duplicate Rejections (409)</strong></td>
+            <td><code>http.response.code == 409</code></td>
+            <td>Demonstrates idempotency key collision rejection</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="copyFilter('http.response.code == 409')">📋 Copy</button></td>
+          </tr>
+          <tr>
+            <td><strong>Inspect TCP 3-Way Handshake</strong></td>
+            <td><code>tcp.flags.syn == 1 && tcp.port == 5000</code></td>
+            <td>Shows SYN and SYN-ACK packets initiating session</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="copyFilter('tcp.flags.syn == 1 && tcp.port == 5000')">📋 Copy</button></td>
+          </tr>
+          <tr>
+            <td><strong>Filter Hospital Tele-Consultations</strong></td>
+            <td><code>http.request.uri contains "/response"</code></td>
+            <td>Inspects doctor consultation advice packet</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="copyFilter('http.request.uri contains &quot;/response&quot;')">📋 Copy</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Packet Structure Breakdown View -->
+    <h4 style="color:#0f172a; margin-top:1.5rem; margin-bottom:0.75rem;">Sample Captured Frame Breakdown (OSI Layer Mapping):</h4>
+    <pre class="packet-box">
++---------------------------------------------------------------------------------------------------------+
+| [FRAME LAYER 1] 1420 bytes on wire (11360 bits), 1420 bytes captured                                   |
++---------------------------------------------------------------------------------------------------------+
+| [ETHERNET LAYER 2] Destination: 00:0c:29:8f:a1:3b, Source: 00:1a:2b:3c:4d:5e, Type: IPv4 (0x0800)       |
++---------------------------------------------------------------------------------------------------------+
+| [INTERNET PROTOCOL v4 LAYER 3] Src: 192.168.1.102, Dst: 127.0.0.1, TTL: 64, Protocol: TCP (6)           |
++---------------------------------------------------------------------------------------------------------+
+| [TRANSMISSION CONTROL PROTOCOL LAYER 4] Src Port: 54192, Dst Port: 5000, Seq: 1, Ack: 1, Flags: [PSH, ACK]|
++---------------------------------------------------------------------------------------------------------+
+| [APPLICATION LAYER 7: HTTP/1.1 REST]                                                                    |
+| POST /api/reports HTTP/1.1\r\n                                                                           |
+| Host: 127.0.0.1:5000\r\n                                                                                |
+| Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\r\n                                       |
+| Idempotency-Key: IDEMP-RAMESH-20261102-001\r\n                                                          |
+| Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryX9aY...\r\n                          |
+| \r\n                                                                                                    |
+| [MULTIPART BODY]: {"patient_id": "PAT-7821", "name": "Ramesh Yadav", "diagnosis": "Appendicitis"}...    |
+| [PDF ATTACHMENT]: %PDF-1.4 ... (4076 bytes) ... %%EOF                                                  |
++---------------------------------------------------------------------------------------------------------+
+| [SERVER RESPONSE ACK PACKET]: HTTP/1.1 201 Created                                                     |
+| Content-Type: application/json\r\n                                                                      |
+| X-RuralLink-Version: 2.0.0-academic-btech\r\n                                                           |
+| {"ack_token": "ACK-7fa19c28e4", "sha256": "4b9a...", "status": "Received"}                              |
++---------------------------------------------------------------------------------------------------------+
+    </pre>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    loadLabStats();
+  });
+
+  async function loadLabStats() {
+    try {
+      const res = await window.api.getLabStats();
+      if (res.data && res.data.metrics) {
+        const m = res.data.metrics;
+        document.getElementById('metric-total-reports').textContent = m.total_reports;
+        document.getElementById('metric-acks').textContent = m.server_acks_issued;
+        document.getElementById('metric-duplicates').textContent = m.duplicates_prevented;
+        document.getElementById('metric-avg-rtt').textContent = `${m.average_rtt_ms} ms`;
+      }
+    } catch (err) {
+      console.warn('Could not load lab stats:', err);
+    }
+  }
+
+  async function runFaultTest(type, delaySeconds = 2) {
+    try {
+      showToast(`Executing fault test: ${type.toUpperCase()}...`, 'info');
+      const res = await window.api.simulateFault(type, delaySeconds);
+      showToast(res.data.message || 'Fault test executed', 'success');
+      loadLabStats();
+    } catch (err) {
+      showToast(`Caught Expected Simulation Error: ${err.message}`, 'warning', 6000);
+      loadLabStats();
+    }
+  }
+
+  function copyFilter(filterText) {
+    navigator.clipboard.writeText(filterText)
+      .then(() => showToast('Wireshark filter copied to clipboard!', 'success'))
+      .catch(() => showToast('Filter: ' + filterText, 'info'));
+  }
+</script>
+{% endblock %}
