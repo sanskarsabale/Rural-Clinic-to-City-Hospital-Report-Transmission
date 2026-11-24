@@ -1,7 +1,7 @@
 # RuralLink — Rural Clinic to City Hospital Report Transmission System
 
 > **Second Year B.Tech Information Technology — Data Communication Academic Project**  
-> **Project Team:** Sanskar Sabale · Vaishnavi Potdar · Jayesh Sutar
+https://rural-clinic-to-city-hospital-report.onrender.com/
 
 ---
 
